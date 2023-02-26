@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS Users CASCADE;
 DROP TABLE IF EXISTS Albums CASCADE;
 DROP TABLE IF EXISTS Comments CASCADE;
 DROP TABLE IF EXISTS Tags CASCADE;
-
+DROP TABLE IF EXISTS Friends CASCADE;
 
 CREATE TABLE Users (
     user_id int4 AUTO_INCREMENT,
@@ -47,6 +47,14 @@ CREATE TABLE Tags (
   tag_word VARCHAR(100),
   CONSTRAINT tags_pk PRIMARY KEY (tag_word)
 );
+
+CREATE TABLE Friends (
+	userID1 INTEGER,
+	userID2 INTEGER,
+	CONSTRAINT PRIMARY KEY (userID1, userID2),
+	FOREIGN KEY (userID1) REFERENCES Users(user_id),
+	FOREIGN KEY (userID2) REFERENCES Users(user_id));
+
 
 
 INSERT INTO Users (email, password) VALUES ('test@bu.edu', 'test');

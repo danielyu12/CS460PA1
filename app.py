@@ -116,7 +116,8 @@ def unauthorized_handler():
 #you can specify specific methods (GET/POST) in function header instead of inside the functions as seen earlier
 @app.route("/register", methods=['GET'])
 def register():
-	return render_template('register.html', supress='True')
+	supressText = request.args.get('supress') != 'False'
+	return render_template('register.html', supress=supressText)
 
 @app.route("/register", methods=['POST'])
 def register_user():
@@ -143,8 +144,8 @@ def register_user():
 		flask_login.login_user(user)
 		return render_template('hello.html', name=email, message='Account Created!')
 	else:
-		print("couldn't find all tokens")
-		return flask.redirect(flask.url_for('register'))
+		print("email not unique")
+		return flask.redirect(flask.url_for('register', supress=False))
 
 def getUsersPhotos(uid):
 	cursor = conn.cursor()
@@ -194,6 +195,27 @@ def upload_file():
 		return render_template('upload.html')
 #end photo uploading code
 
+@app.route("/friends", methods=['GET', 'POST'])
+def friends():
+	if request.method == 'POST':
+		uid = getUserIdFromEmail(flask_login.current_user.id)
+		friend = getUserIdFromEmail(request.form.get('friend-email'))
+		if notFriends(uid, friend):
+			cursor = conn.cursor()
+			cursor.execute('''INSERT INTO Friends (userID1, userID2) VALUES (%s, %s)''',(uid, friend))
+			conn.commit()
+			return flask.redirect(flask.url_for("friends"))
+		else:
+			return flask.redirect(flask.url_for("friends"))
+	else:
+		return render_template('friends.html')
+
+def notFriends(userID1, userID2):
+	cursor = conn.cursor()
+	cursor.execute('''SELECT * FROM Friends WHERE userID1=%s AND userID2=%s''',(userID1, userID2))
+	if len(cursor.fetchall()) == 0:
+		return True
+	return False
 
 #default page
 @app.route("/", methods=['GET'])
