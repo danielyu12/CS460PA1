@@ -7,6 +7,9 @@
     <h1>Manage manage your friends</h1>
   </div>
   <div id="content">
+    {%if error%}
+    <h4>You are already friends with that person!</h4>
+    {%endif%}
     <form method="post" action="/friends">
       <label for="friend-email"
         >Add more friends by entering their email:</label
@@ -15,7 +18,16 @@
       <input type="submit" placeholder="Submit" />
     </form>
 
-    <h4>These are youre current friends</h4>
+    <h4>These are your current friends</h4>
+    <div>
+      <ul>
+        {%if friends%} {% for friend in friends %}
+        <li>
+          <div>{{friend[0]}} {{friend[1]}}</div>
+        </li>
+        {% endfor %} {%endif%}
+      </ul>
+    </div>
   </div>
 </body>
 <a href="/">Home</a>

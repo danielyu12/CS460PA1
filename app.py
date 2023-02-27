@@ -206,9 +206,16 @@ def friends():
 			conn.commit()
 			return flask.redirect(flask.url_for("friends"))
 		else:
-			return flask.redirect(flask.url_for("friends"))
+			return flask.redirect(flask.url_for("friends", error='True'))
 	else:
-		return render_template('friends.html')
+		error = request.args.get('error') == 'True'
+		uid = getUserIdFromEmail(flask_login.current_user.id)
+		cursor = conn.cursor()
+		cursor.execute('''SELECT first_name, last_name, email FROM Friends INNER JOIN Users ON userID2=user_id WHERE userID1=%s
+''', (uid))
+		friends = cursor.fetchall()
+		print(friends)
+		return render_template('friends.html', error=error, friends=friends)
 
 def notFriends(userID1, userID2):
 	cursor = conn.cursor()
@@ -216,6 +223,15 @@ def notFriends(userID1, userID2):
 	if len(cursor.fetchall()) == 0:
 		return True
 	return False
+
+@app.route('/galary', methods=['GET'])
+def galary():
+	cursor = conn.cursor()
+	cursor.execute('''SELECT imgdata, caption FROM Pictures''')
+	photos = cursor.fetchall()
+	return render_template('galary.html', photos=photos, base64=base64)
+	
+#end photo uploading code
 
 #default page
 @app.route("/", methods=['GET'])

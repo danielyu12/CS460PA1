@@ -1,0 +1,22 @@
+<!-- author ben lawson balawson@bu.edu -->
+<head>
+  <title>Galary!</title>
+</head>
+<body>
+  <div class="title">
+    <h1>View the Galary</h1>
+  </div>
+  <div id="content">
+    <ul>
+      {%if photos%} {%for photo in photos%}
+      <li>
+        <img
+          src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'
+        />
+        {{photo[1]}}<br />
+      </li>
+      {% endfor %} {%endif%}
+    </ul>
+  </div>
+</body>
+<a href="/">Home</a>
