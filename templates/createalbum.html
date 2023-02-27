@@ -1,0 +1,20 @@
+<!-- author ben lawson (balawson@bu.edu) -->
+<head>
+  <title>Create a new album</title>
+</head>
+<body>
+  <div class="title">
+    <h1>Create a new album</h1>
+  </div>
+  <form method="post" enctype="multipart/form-data" action="/create_album">
+    <label for="caption">Album Name</label>
+    <input type="text" name="album-name" required="true" /><br />
+    <input type="submit" value="Submit" />
+  </form>
+  <div>
+    {%for album in albums%}
+    <div>{{album[0]}}</div>
+    {%endfor%}
+  </div>
+</body>
+<a href="/">Home</a>

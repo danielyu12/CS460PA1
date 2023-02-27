@@ -1,11 +1,7 @@
+DROP DATABASE IF EXISTS photoshare;
 CREATE DATABASE IF NOT EXISTS photoshare;
 USE photoshare;
-DROP TABLE IF EXISTS Pictures CASCADE;
-DROP TABLE IF EXISTS Users CASCADE;
-DROP TABLE IF EXISTS Albums CASCADE;
-DROP TABLE IF EXISTS Comments CASCADE;
-DROP TABLE IF EXISTS Tags CASCADE;
-DROP TABLE IF EXISTS Friends CASCADE;
+
 
 CREATE TABLE Users (
     user_id int4 NOT NULL AUTO_INCREMENT,
@@ -34,7 +30,7 @@ CREATE TABLE Pictures (
   user_id int4 ,
   imgdata longblob,
   caption VARCHAR(255),
-  album_id int4, --make notnull
+  album_id int4 NOT NULL, 
   PRIMARY KEY (picture_id),
   FOREIGN KEY (user_id) REFERENCES Users(user_id),
   FOREIGN KEY (album_id) REFERENCES Albums(album_id) ON DELETE CASCADE

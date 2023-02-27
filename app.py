@@ -181,19 +181,40 @@ def allowed_file(filename):
 @app.route('/upload', methods=['GET', 'POST'])
 @flask_login.login_required
 def upload_file():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
 	if request.method == 'POST':
-		uid = getUserIdFromEmail(flask_login.current_user.id)
 		imgfile = request.files['photo']
 		caption = request.form.get('caption')
+		album = request.form.get('albums')
 		photo_data =imgfile.read()
 		cursor = conn.cursor()
-		cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption) VALUES (%s, %s, %s )''', (photo_data, uid, caption))
+		cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption, album_id) VALUES (%s, %s, %s, %s )''', (photo_data, uid, caption, album))
 		conn.commit()
 		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	#The method is GET so we return a  HTML form to upload the a photo.
 	else:
-		return render_template('upload.html')
+		cursor = conn.cursor()
+		cursor.execute('''SELECT album_id, album_name FROM Albums WHERE user_id=%s''', (uid))
+		albums = cursor.fetchall()
+		return render_template('upload.html', albums=albums)
 #end photo uploading code
+
+@app.route('/create_album', methods=['GET', 'POST'])
+@flask_login.login_required
+def create_album():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	if request.method == 'POST':
+		album_name=request.form.get('album-name')
+		cursor = conn.cursor()
+		cursor.execute('''INSERT INTO Albums (album_name, user_id) VALUES (%s, %s)''', (album_name, uid))
+		conn.commit()
+		return  flask.redirect(flask.url_for("create_album"))
+	#The method is GET so we return a  HTML form to upload the a photo.
+	else:
+		cursor = conn.cursor()
+		cursor.execute('''SELECT album_name FROM Albums WHERE user_id=%s''', (uid))
+		albums = cursor.fetchall()
+		return render_template('createalbum.html', albums=albums)
 
 @app.route("/friends", methods=['GET', 'POST'])
 def friends():
@@ -227,11 +248,45 @@ def notFriends(userID1, userID2):
 @app.route('/galary', methods=['GET'])
 def galary():
 	cursor = conn.cursor()
-	cursor.execute('''SELECT imgdata, caption FROM Pictures''')
+	cursor.execute('''SELECT album_id, album_name FROM Albums''')
+	albums = cursor.fetchall()
+	print(albums)
+	return render_template('galary.html', albums=albums, base64=base64)
+
+@app.route('/album/<album_id>', methods=['GET'])
+def album(album_id):
+	cursor = conn.cursor()
+	cursor.execute('''SELECT imgdata,caption FROM Pictures WHERE album_id=%s''', (album_id))
 	photos = cursor.fetchall()
-	return render_template('galary.html', photos=photos, base64=base64)
+	return render_template('view_album.html', photos=photos, base64=base64)
 	
-#end photo uploading code
+@app.route('/user_albums', methods=['GET', 'POST'])
+@flask_login.login_required
+def user_albums():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	if request.method == 'POST':
+		album_id = request.form.get("albums")
+		print(album_id)
+		cursor = conn.cursor()
+		cursor.execute('''DELETE FROM Albums WHERE album_id=%s''', (album_id))
+		return flask.redirect(flask.url_for('user_albums'))
+	else:
+		cursor = conn.cursor()
+		cursor.execute('''SELECT album_id, album_name FROM Albums WHERE user_id=%s''', (uid))
+		albums = cursor.fetchall()
+		return render_template('user_albums.html', albums=albums)
+
+@app.route('/user_albums/<album_id>', methods=['GET', 'DELETE'])
+@flask_login.login_required
+def manage_user_album(album_id): 
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	if request.method == 'DELETE':
+		return
+	else:
+		cursor = conn.cursor()
+		cursor.execute('''SELECT imgdata,caption FROM Pictures WHERE album_id=%s''', (album_id))
+		photos = cursor.fetchall()
+	return render_template('user_album.html', photos=photos,  base64=base64)
 
 #default page
 @app.route("/", methods=['GET'])

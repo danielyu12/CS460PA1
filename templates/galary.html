@@ -8,14 +8,11 @@
   </div>
   <div id="content">
     <ul>
-      {%if photos%} {%for photo in photos%}
+      {%for album in albums%}
       <li>
-        <img
-          src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'
-        />
-        {{photo[1]}}<br />
+        <a href="album/{{album[0]}}">{{album[1]}}</a>
       </li>
-      {% endfor %} {%endif%}
+      {% endfor %}
     </ul>
   </div>
 </body>

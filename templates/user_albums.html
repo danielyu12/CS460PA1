@@ -1,0 +1,30 @@
+<!-- author ben lawson (balawson@bu.edu) -->
+<!DOCTYPE html>
+<head>
+  <title>Your Albums!</title>
+</head>
+<body>
+  <div class="title">
+    <h1>View your albums</h1>
+  </div>
+  <div id="content">
+    <ul>
+      {%for album in albums%}
+      <li>
+        <a href="user_albums/{{album[0]}}">{{album[1]}}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <form method="post" action="/user_albums">
+    <label for="albums">Select an album to delete</label>
+    <select name="albums">
+      <option value=""></option>
+      {%for album in albums%}
+      <option value="{{album[0]}}">{{album[1]}}</option>
+      {% endfor %}
+    </select>
+    <input type="submit" value="Delete" />
+  </form>
+</body>
+<a href="/">Home</a>

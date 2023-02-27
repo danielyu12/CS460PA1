@@ -11,7 +11,14 @@
     <input type="file" name="photo" required="true" /><br />
     <label for="caption">Please caption:</label>
     <input type="text" name="caption" required="true" /><br />
-    <input type="submit" value="Upload" />
+    <label for="albums">Albums:</label>
+    <select name="albums">
+      {% for album in albums %}
+      <option value="{{album[0]}}">{{album[1]}}</option>
+      {% endfor %}</select
+    ><br />
+    <a href="/create_album">Create a new album</a><br />
+    <input type="submit" value="Upload" /> <br />
   </form>
 </body>
 <a href="/">Home</a>
