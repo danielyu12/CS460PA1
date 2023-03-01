@@ -277,20 +277,17 @@ def user_albums():
 		albums = cursor.fetchall()
 		return render_template('user_albums.html', albums=albums)
 
-@app.route('/user_albums/<album_id>', methods=['GET', 'POST'])
+@app.route('/user_albums/<album_id>', methods=['GET', 'DELETE'])
 @flask_login.login_required
-def manage_user_album(album_id):  
+def manage_user_album(album_id): 
 	uid = getUserIdFromEmail(flask_login.current_user.id)
-	if request.method == 'POST':
-		picture_id = request.form.get("picture_id")
-		cursor = conn.cursor()
-		cursor.execute('''DELETE FROM Pictures WHERE picture_id=%s''', (picture_id))
-		return flask.redirect('/user_albums/{}'.format(album_id))
+	if request.method == 'DELETE':
+		return
 	else:
 		cursor = conn.cursor()
-		cursor.execute('''SELECT imgdata,caption,picture_id FROM Pictures WHERE album_id=%s''', (album_id))
+		cursor.execute('''SELECT imgdata,caption FROM Pictures WHERE album_id=%s''', (album_id))
 		photos = cursor.fetchall()
-	return render_template('user_album.html', photos=photos,  base64=base64, album_id=album_id)
+	return render_template('user_album.html', photos=photos,  base64=base64)
 
 def isPhotoOfCurrentUser(uid, pid):
 	cursor = conn.cursor()
@@ -365,7 +362,8 @@ def getUsersPhotosByTags(uid, tags):
                                         AND t.tag_word = '{0}' AND pics.user_id = '{1}')
 					   """.format(tag,uid))
 		photos+=cursor.fetchall()
-	return photos
+	final = [photo for photo, count in collections.Counter(photos).items() if count == len(t)] 
+	return final
 
 def getAllPhotosByTags(tags):
 	t=tags.split(',')
@@ -380,7 +378,8 @@ def getAllPhotosByTags(tags):
                                        AND t.tag_word = '{0}')
 					   """.format(tag))
 		photos+=cursor.fetchall()
-	return photos
+	final = [photo for photo, count in collections.Counter(photos).items() if count == len(t)] 
+	return final
 
 def getAllPhotos():
 	cursor = conn.cursor()
