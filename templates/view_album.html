@@ -14,6 +14,10 @@
         <img
           src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'
         />
+        <a href="/comment/{{photo[2]}}">View and leave comments</a>
+        <form method="post" action="/like/{{photo[2]}}">
+          <input type="submit" value="LIKE" />
+        </form>
       </li>
       {% endfor %}
     </ul>

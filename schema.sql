@@ -10,7 +10,7 @@ CREATE TABLE Users (
     first_name VARCHAR(100) NOT NULL,
 	  last_name VARCHAR(100) NOT NULL,
 	  date_of_birth DATE NOT NULL,
-	  contributionScore INTEGER, 
+	  contributionScore int4 DEFAULT 0, 
 	  gender VARCHAR(10),
 	  hometown VARCHAR(100),
   PRIMARY KEY (user_id)
@@ -40,10 +40,10 @@ CREATE TABLE Comments (
   comment_id int4  NOT NULL AUTO_INCREMENT,
 	comment_text VARCHAR(100) NOT NULL,
 	date_commented DATETIME DEFAULT CURRENT_TIMESTAMP,
-  user_id int4 NOT NULL,
+  user_id int4 DEFAULT NULL,
   picture_id int4 NOT NULL,
   PRIMARY KEY (comment_id),
-   FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
   FOREIGN KEY (picture_id) REFERENCES Pictures(picture_id) ON DELETE CASCADE
 );
 

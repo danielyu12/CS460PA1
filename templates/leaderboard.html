@@ -1,0 +1,14 @@
+<!-- author ben lawson (balawson@bu.edu) -->
+<!DOCTYPE html>
+<head>
+  <title>Your Albums!</title>
+</head>
+<body>
+  <h1>Top 10 Contributers</h1>
+  <ol>
+    {%for user in leaderboard%}
+    <li>{{user[0]}} {{user[1]}} {{user[2]}}</li>
+    {%endfor%}
+  </ol>
+</body>
+<a href="/">Home</a>
