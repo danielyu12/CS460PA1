@@ -276,17 +276,20 @@ def user_albums():
 		albums = cursor.fetchall()
 		return render_template('user_albums.html', albums=albums)
 
-@app.route('/user_albums/<album_id>', methods=['GET', 'DELETE'])
+@app.route('/user_albums/<album_id>', methods=['GET', 'POST'])
 @flask_login.login_required
-def manage_user_album(album_id): 
+def manage_user_album(album_id):  
 	uid = getUserIdFromEmail(flask_login.current_user.id)
-	if request.method == 'DELETE':
-		return
+	if request.method == 'POST':
+		picture_id = request.form.get("picture_id")
+		cursor = conn.cursor()
+		cursor.execute('''DELETE FROM Pictures WHERE picture_id=%s''', (picture_id))
+		return flask.redirect('/user_albums/{}'.format(album_id))
 	else:
 		cursor = conn.cursor()
-		cursor.execute('''SELECT imgdata,caption FROM Pictures WHERE album_id=%s''', (album_id))
+		cursor.execute('''SELECT imgdata,caption,picture_id FROM Pictures WHERE album_id=%s''', (album_id))
 		photos = cursor.fetchall()
-	return render_template('user_album.html', photos=photos,  base64=base64)
+	return render_template('user_album.html', photos=photos,  base64=base64, album_id=album_id)
 
 #default page
 @app.route("/", methods=['GET'])
