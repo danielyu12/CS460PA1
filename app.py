@@ -13,6 +13,7 @@ import flask
 from flask import Flask, Response, request, render_template, redirect, url_for
 from flaskext.mysql import MySQL
 import flask_login
+import collections
 
 #for image uploading
 import os, base64
@@ -23,7 +24,7 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'NOcap122020!'
+app.config['MYSQL_DATABASE_PASSWORD'] = '@TeemO20120'
 app.config['MYSQL_DATABASE_DB'] = 'photoshare'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
@@ -290,6 +291,102 @@ def manage_user_album(album_id):
 		cursor.execute('''SELECT imgdata,caption,picture_id FROM Pictures WHERE album_id=%s''', (album_id))
 		photos = cursor.fetchall()
 	return render_template('user_album.html', photos=photos,  base64=base64, album_id=album_id)
+
+def isPhotoOfCurrentUser(uid, pid):
+	cursor = conn.cursor()
+	cursor.execute("SELECT user_id FROM Pictures WHERE picture_id = '{0}'".format(pid))
+	picture_uid = cursor.fetchone()[0]
+	return picture_uid == uid
+
+def getPicture(pid):
+	cursor = conn.cursor()
+	cursor.execute("SELECT imgdata, caption, picture_id FROM Pictures WHERE picture_id = '{0}'".format(pid))
+	return cursor.fetchone()
+
+@app.route("/photo/<pid>", methods=['GET'])
+def get_single_photo(pid=-1):
+	assert pid != -1
+	if request.method == 'GET':
+		photo = getPicture(pid)
+		if flask_login.current_user.id == -1 or not isPhotoOfCurrentUser(getUserIdFromEmail(flask_login.current_user.id), pid):
+			return render_template('singlePhotoView.html', photo=photo,base64=base64)
+		else:
+			return render_template('singlePhotoView.html', photo=photo,base64=base64)
+
+#begin code for tags management
+@app.route("/photos", methods=['GET','POST'])
+@flask_login.login_required
+def get_all_user_photos():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	if request.method == 'GET':
+		return render_template('photosView.html', photos=getUsersPhotos(uid),tags=getTop10Tags(),base64=base64)
+	else:
+		tags = request.form.get('tags')
+		return render_template('photosView.html', photos=getUsersPhotosByTags(uid,tags),tags=getTop10Tags(),base64=base64)
+
+
+@app.route("/all_photos/<tags>", methods=['GET'])
+def get_all_photos_by_tags(tags=""):
+	assert tags != None or tags != ""
+	return render_template('allPhotosView.html', photos=getAllPhotosByTags(tags),tags=getTop10Tags(),base64=base64)
+
+@app.route("/all_photos", methods=['GET','POST'])
+def get_all_photos():
+	if request.method == 'GET':
+		return render_template('allPhotosView.html', photos=getAllPhotos(),tags=getTop10Tags(),base64=base64)
+	else:
+		tags = request.form.get('tags')
+		return render_template('allPhotosView.html', photos=getAllPhotosByTags(tags),tags=getTop10Tags(),base64=base64)
+
+@app.route("/photos/<tags>", methods=['GET'])
+def get_all_user_photos_by_tags(tags=""):
+	assert tags != None or tags != ""
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	return render_template('photosView.html', photos=getUsersPhotosByTags(uid,tags),tags=getTop10Tags(),base64=base64)
+	
+#end code for tags management
+
+#functions for tags management
+def getTop10Tags():
+	cursor = conn.cursor()
+	cursor.execute("SELECT tag_word FROM Tags ORDER BY num_used DESC LIMIT 10")    #Tags table must have a num_used column for this to work
+	return cursor.fetchall()
+
+def getUsersPhotosByTags(uid, tags):
+	t=tags.split(',')
+	cursor = conn.cursor()
+	photos = []
+	for tag in t:
+		cursor.execute("""
+						SELECT imgdata, picture_id FROM Pictures pics 
+						WHERE EXISTS (SELECT * FROM Tagged tg INNER JOIN
+               							Tags t ON t.tag_id = tg.tag_id
+              						    WHERE pics.picture_id = tg.picture_id
+                                        AND t.tag_word = '{0}' AND pics.user_id = '{1}')
+					   """.format(tag,uid))
+		photos+=cursor.fetchall()
+	return [photo for photo, count in collections.Counter(photos).items() if count == len(t)] 
+
+def getAllPhotosByTags(tags):
+	t=tags.split(',')
+	cursor = conn.cursor()
+	photos = []
+	for tag in t:
+		cursor.execute("""
+						SELECT imgdata, picture_id FROM Pictures pics 
+						WHERE EXISTS (SELECT * FROM Tagged tg INNER JOIN
+               							Tags t ON t.tag_id = tg.tag_id
+              						  WHERE pics.picture_id = tg.picture_id
+                                       AND t.tag_word = '{0}')
+					   """.format(tag))
+		photos+=cursor.fetchall()
+	return [photo for photo, count in collections.Counter(photos).items() if count == len(t)] 
+
+def getAllPhotos():
+	cursor = conn.cursor()
+	cursor.execute("SELECT imgdata, picture_id FROM Pictures")
+	return cursor.fetchall() 
+
 
 #default page
 @app.route("/", methods=['GET'])

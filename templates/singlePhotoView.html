@@ -1,0 +1,8 @@
+{% if photo %}
+    <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+{% else %}
+    <p>Photo does not exist!</p>
+{% endif %}
+<ul>
+    <li><a href='/'>Home</a></li>
+</ul>

@@ -58,6 +58,7 @@ CREATE TABLE Likes(
 CREATE TABLE Tags (
   tag_id int4 NOT NULL AUTO_INCREMENT, 
   tag_word VARCHAR(100),
+  num_used int4 DEFAULT 1,
   PRIMARY KEY (tag_id)
 );
 
