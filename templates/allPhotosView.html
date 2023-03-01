@@ -6,7 +6,7 @@
         <tr>
             <td>
                 <form>
-                    <label for="tags">Choose most popular tags to search :</label>
+                    <label for="tags">Choose most popular tags to search (Displays the most popular tags with the most used at the top):</label>
                     <select multiple name="tags" id="tags" required='true'>
                         {% for tag in tags %}
                         <option value='{{tag[0]}}'>{{tag[0]}}</option>
