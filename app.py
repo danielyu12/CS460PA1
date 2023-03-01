@@ -362,7 +362,7 @@ def getUsersPhotosByTags(uid, tags):
                                         AND t.tag_word = '{0}' AND pics.user_id = '{1}')
 					   """.format(tag,uid))
 		photos+=cursor.fetchall()
-	return [photo for photo, count in collections.Counter(photos).items() if count == len(t)] 
+	return photos
 
 def getAllPhotosByTags(tags):
 	t=tags.split(',')
@@ -377,7 +377,7 @@ def getAllPhotosByTags(tags):
                                        AND t.tag_word = '{0}')
 					   """.format(tag))
 		photos+=cursor.fetchall()
-	return [photo for photo, count in collections.Counter(photos).items() if count == len(t)] 
+	return photos
 
 def getAllPhotos():
 	cursor = conn.cursor()
