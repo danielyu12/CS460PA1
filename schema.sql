@@ -79,6 +79,6 @@ CREATE TABLE Friends (
 
 
 
-INSERT INTO Users (email, password, first_name, last_name) VALUES ('test@bu.edu', 'test', 'linah', 'uchiyama');
-INSERT INTO Users (email, password, first_name, last_name) VALUES ('test1@bu.edu', 'test', 'olivia', 'hur');
+INSERT INTO Users (email, password, first_name, last_name, date_of_birth) VALUES ('test@bu.edu', 'test', 'linah', 'uchiyama', '2023-02-10');
+INSERT INTO Users (email, password, first_name, last_name, date_of_birth) VALUES ('test1@bu.edu', 'test', 'olivia', 'hur','2023-02-10');
 
