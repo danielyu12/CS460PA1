@@ -24,7 +24,7 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = '@TeemO20120'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'NOcap122020!'
 app.config['MYSQL_DATABASE_DB'] = 'photoshare'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
@@ -190,6 +190,7 @@ def upload_file():
 		photo_data =imgfile.read()
 		cursor = conn.cursor()
 		cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption, album_id) VALUES (%s, %s, %s, %s )''', (photo_data, uid, caption, album))
+		update_contribution(uid)
 		conn.commit()
 		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	#The method is GET so we return a  HTML form to upload the a photo.
@@ -257,7 +258,7 @@ def galary():
 @app.route('/album/<album_id>', methods=['GET'])
 def album(album_id):
 	cursor = conn.cursor()
-	cursor.execute('''SELECT imgdata,caption FROM Pictures WHERE album_id=%s''', (album_id))
+	cursor.execute('''SELECT imgdata,caption,picture_id FROM Pictures WHERE album_id=%s''', (album_id))
 	photos = cursor.fetchall()
 	return render_template('view_album.html', photos=photos, base64=base64)
 	
@@ -270,6 +271,7 @@ def user_albums():
 		print(album_id)
 		cursor = conn.cursor()
 		cursor.execute('''DELETE FROM Albums WHERE album_id=%s''', (album_id))
+		conn.commit()
 		return flask.redirect(flask.url_for('user_albums'))
 	else:
 		cursor = conn.cursor()
@@ -285,6 +287,7 @@ def manage_user_album(album_id):
 		picture_id = request.form.get("picture_id")
 		cursor = conn.cursor()
 		cursor.execute('''DELETE FROM Pictures WHERE picture_id=%s''', (picture_id))
+		conn.commit()
 		return flask.redirect('/user_albums/{}'.format(album_id))
 	else:
 		cursor = conn.cursor()
@@ -387,6 +390,69 @@ def getAllPhotos():
 	cursor.execute("SELECT imgdata, picture_id FROM Pictures")
 	return cursor.fetchall() 
 
+# start of comment code
+
+@app.route("/comment/<picture_id>", methods=['GET', 'POST'])
+def leave_comment(picture_id):
+	if request.method == 'GET':
+		error = request.args.get('error') == 'True'
+		cursor = conn.cursor()
+		cursor.execute('''SELECT comment_text FROM Comments WHERE picture_id=%s''', (picture_id))
+		comments = cursor.fetchall()
+		return render_template("comments.html", picture_id=picture_id, comments=comments, error=error, likes=current_likes(picture_id))
+	else:
+		cursor = conn.cursor()
+		comment = request.form.get('comment')
+		if flask_login.current_user.is_authenticated:
+			uid = getUserIdFromEmail(flask_login.current_user.id)
+			if checkPictureIsNotUsers(uid, picture_id):
+				update_contribution(uid)
+				cursor.execute('''INSERT INTO Comments (comment_text, user_id, picture_id) VALUES (%s, %s, %s)''', (comment, uid, picture_id))
+			else:
+				return flask.redirect("/comment/{0}?error={1}".format(picture_id,'True'))
+		else:	
+			cursor.execute('''INSERT INTO Comments (comment_text, picture_id) VALUES (%s, %s)''', (comment, picture_id))	
+		conn.commit()
+		return flask.redirect("/comment/{}".format(picture_id))
+
+def checkPictureIsNotUsers(uid, picture_id):
+	cursor = conn.cursor()
+	cursor.execute('''SELECT caption FROM Pictures WHERE user_id=%s AND picture_id=%s''', (uid, picture_id))
+	picture = cursor.fetchall()
+	return len(picture) != 1
+
+#end of comment code
+
+#start of like code
+
+@app.route("/like/<picture_id>", methods=['POST'])
+@flask_login.login_required
+def like(picture_id):
+	cursor = conn.cursor()
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	cursor.execute('''INSERT INTO Likes (picture_id, user_id) VALUES (%s, %s)''', (picture_id, uid))
+	conn.commit()
+	return flask.redirect(url_for('galary'))
+
+def current_likes(picture_id):
+	cursor = conn.cursor()
+	cursor.execute('''SELECT first_name, last_name FROM Users INNER JOIN Likes ON Likes.user_id=Users.user_id WHERE picture_id=%s''', (picture_id))
+	return cursor.fetchall()
+# end of like code
+
+# start of contribution score code
+@app.route("/leaderboard", methods=['GET'])
+def leaderboard():
+	cursor = conn.cursor()
+	cursor.execute('''SELECT first_name, last_name, contributionScore FROM Users ORDER BY contributionScore DESC LIMIT 10''')
+	leaderboard=cursor.fetchall()
+	return render_template('leaderboard.html', leaderboard=leaderboard)
+
+def update_contribution(user_id):
+	cursor = conn.cursor()
+	cursor.execute('''UPDATE Users SET contributionScore = contributionScore + 1 WHERE user_id=%s''', (user_id))
+	conn.commit()
+# end of contribution score code
 
 #default page
 @app.route("/", methods=['GET'])

@@ -1,0 +1,28 @@
+<!-- author ben lawson (balawson@bu.edu) -->
+<!DOCTYPE html>
+<head>
+  <title>Your Albums!</title>
+</head>
+<body>
+  <div class="title">
+    {%if error%}
+    <h3>ERROR: You cannot comment on your own picture</h3>
+    {%endif%}
+    <h2>Current Comments</h2>
+    {%for comment in comments%}
+    <p>{{comment[0]}}</p>
+    {%endfor%}
+  </div>
+  <form method="post" action="/comment/{{picture_id}}">
+    <label for="comment">Comment</label>
+    <input name="comment" type="text" />
+    <input type="submit" value="Comment" />
+  </form>
+  <h2>Liked by:</h2>
+  <ul>
+    {%for like in likes%}
+    <li>{{like[0]}} {{like[1]}}</li>
+    {%endfor%}
+  </ul>
+</body>
+<a href="/">Home</a>
