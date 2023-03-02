@@ -13,6 +13,7 @@ import flask
 from flask import Flask, Response, request, render_template, redirect, url_for
 from flaskext.mysql import MySQL
 import flask_login
+import numpy as np
 import collections
 
 #for image uploading
@@ -219,9 +220,10 @@ def create_album():
 		return render_template('createalbum.html', albums=albums)
 
 @app.route("/friends", methods=['GET', 'POST'])
+@flask_login.login_required
 def friends():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
 	if request.method == 'POST':
-		uid = getUserIdFromEmail(flask_login.current_user.id)
 		friend = getUserIdFromEmail(request.form.get('friend-email'))
 		if notFriends(uid, friend):
 			cursor = conn.cursor()
@@ -231,14 +233,15 @@ def friends():
 		else:
 			return flask.redirect(flask.url_for("friends", error='True'))
 	else:
+		recommendations = getRecommendedFriends(uid)
+		print(recommendations)
 		error = request.args.get('error') == 'True'
 		uid = getUserIdFromEmail(flask_login.current_user.id)
 		cursor = conn.cursor()
 		cursor.execute('''SELECT first_name, last_name, email FROM Friends INNER JOIN Users ON userID2=user_id WHERE userID1=%s
 ''', (uid))
 		friends = cursor.fetchall()
-		print(friends)
-		return render_template('friends.html', error=error, friends=friends)
+		return render_template('friends.html', error=error, friends=friends, recommendations=recommendations)
 
 def notFriends(userID1, userID2):
 	cursor = conn.cursor()
@@ -455,6 +458,36 @@ def update_contribution(user_id):
 	cursor.execute('''UPDATE Users SET contributionScore = contributionScore + 1 WHERE user_id=%s''', (user_id))
 	conn.commit()
 # end of contribution score code
+
+# start of friend recommendations
+def getRecommendedFriends(user_id):
+	cursor = conn.cursor()
+	cursor.execute('''SELECT userID2 FROM Friends WHERE userID1=%s''', (user_id))
+	friends = cursor.fetchall()
+	friendsDict = {}
+	for friend in friends:
+		cursor.execute('''SELECT userID2 FROM Friends WHERE userID1=%s''', (friend[0]))
+		keyFriends = cursor.fetchall()
+		friendsDict[friend[0]] = keyFriends
+	finalIntersect = ()
+	for tup in friendsDict:
+		if finalIntersect == ():
+			finalIntersect = friendsDict[tup]
+		else:
+			finalIntersect = tuple(set(finalIntersect).intersection(set(friendsDict[tup])))
+	recommendedIDs = []
+	for value in finalIntersect:
+		if value[0] != user_id:
+			recommendedIDs.append(value[0])
+	friendsList = []
+	for id in recommendedIDs:
+		cursor.execute('''SELECT first_name, last_name, email FROM Users WHERE user_id=%s''', (id))
+		friendInfo = cursor.fetchall()
+		friendsList.append(friendInfo[0])
+	return friendsList
+
+
+# end of friend recommendations
 
 #default page
 @app.route("/", methods=['GET'])
