@@ -18,6 +18,18 @@
       <input type="submit" placeholder="Submit" />
     </form>
 
+    <div>
+      <h4>Recommended Friends</h4>
+      <ul>
+        {% for recommendation in recommendations %}
+        <li>
+          Name: {{recommendation[0]}} {{recommendation[1]}} </br>
+          Email: {{recommendation[2]}}
+        </li>
+        {%endfor%}
+      </ul>
+    </div>
+
     <h4>These are your current friends</h4>
     <div>
       <ul>
