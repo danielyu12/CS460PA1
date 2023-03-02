@@ -1,0 +1,20 @@
+<title>You May Also Like Recommendations</title>
+
+{% if recommendations %}
+<h1>Top Recommended Photos</h1>
+<ul>
+    {% for recommendation in recommendations %}
+        <li>
+            <p>Picture ID: {{ recommendation[0] }}</p>
+            <img src='data:image/jpg;base64, {{ base64.b64encode(recommendation[1]).decode("ascii") }}'/></li>
+            <p>Matched Tags: {{ recommendation[2] }}</p>
+            <p>Total Tags: {{ recommendation[3] }}</p>
+        </li>
+    {% endfor %}
+</ul>
+<a href='/'>Home</a>
+{% else %}
+  <p> There are no recommended photos :(</p>
+  <a href='/'>Home</a>
+{% endif %}
+

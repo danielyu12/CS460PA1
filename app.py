@@ -24,7 +24,7 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'NOcap122020!'
+app.config['MYSQL_DATABASE_PASSWORD'] = '@TeemO20120'
 app.config['MYSQL_DATABASE_DB'] = 'photoshare'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
@@ -455,6 +455,58 @@ def update_contribution(user_id):
 	cursor.execute('''UPDATE Users SET contributionScore = contributionScore + 1 WHERE user_id=%s''', (user_id))
 	conn.commit()
 # end of contribution score code
+
+
+
+#start of you may like recommendation code
+@app.route("/recommendations", methods=['GET'])
+@flask_login.login_required
+def get_top_recommended_photos():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	return render_template('recommendation.html', recommendations=getTopYouMayLike(uid), base64 =base64)
+
+#The function returns a list of dictionaries, where each dictionary represents a recommended picture with its ID, 
+# the number of matched tags, and the total number of tags. The pictures are ranked by the number of matched tags in 
+# descending order and the total number of tags in ascending order.
+def getTopYouMayLike(uid):
+    cursor = conn.cursor()
+    # Create a temporary table containing the picture IDs for the user's photos
+    cursor.execute("""SELECT p.picture_id, p.imgdata, COUNT(*) AS matched_tags, COUNT(pt.tag_id) AS total_tags
+FROM Pictures p
+INNER JOIN Tagged pt ON pt.picture_id = p.picture_id
+INNER JOIN Tags t ON t.tag_id = pt.tag_id
+INNER JOIN (
+    SELECT pt2.tag_id, COUNT(*) AS num_tags
+    FROM Tagged pt2
+    INNER JOIN Pictures p2 ON pt2.picture_id = p2.picture_id
+    WHERE p2.user_id = '{0}'
+    GROUP BY pt2.tag_id
+    ORDER BY num_tags DESC
+    LIMIT 3
+) top_tags ON t.tag_id = top_tags.tag_id
+GROUP BY p.picture_id, p.imgdata
+HAVING matched_tags > 0
+ORDER BY matched_tags DESC, total_tags ASC
+LIMIT 10;
+    """.format(uid))
+    output = cursor.fetchall()
+
+    # Convert the query results to a list of dictionaries
+    recommendations = []
+    for row in output:
+        recommendations.append(    #picture_id, img_data, matched_tags, total_tags
+            [row[0], row[1], row[2], row[3]]
+        )
+
+    print(len(recommendations))
+    return recommendations
+
+
+
+#end of you may like recommendation code
+
+
+
 
 #default page
 @app.route("/", methods=['GET'])
