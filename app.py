@@ -14,6 +14,7 @@ from flask import Flask, Response, request, render_template, redirect, url_for
 from flaskext.mysql import MySQL
 import flask_login
 import numpy as np
+import operator
 import collections
 
 #for image uploading
@@ -25,7 +26,7 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = '@TeemO20120'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'NOcap122020!'
 app.config['MYSQL_DATABASE_DB'] = 'photoshare'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
@@ -536,9 +537,28 @@ def getRecommendedFriends(user_id):
 		friendInfo = cursor.fetchall()
 		friendsList.append(friendInfo[0])
 	return friendsList
-
-
 # end of friend recommendations
+
+# start of comment search
+@app.route("/comment_search", methods=['GET', 'POST'])
+def comment_search():
+	if request.method == "GET":
+		return render_template('searchComments.html')
+	else:
+		comment = request.form.get("comment-input")
+		cursor = conn.cursor()
+		cursor.execute('''SELECT first_name, last_name FROM Users INNER JOIN Comments ON Users.user_id=Comments.user_id WHERE Comments.comment_text=%s''', (comment))
+		users = cursor.fetchall()
+		commentDict = {}
+		for user in users:
+			name = user[0]+" "+user[1]
+			if name in commentDict:
+				commentDict[name] += 1
+			else:
+				commentDict[name] = 1
+		sortedUsers = sorted(commentDict.items(), key=operator.itemgetter(1),reverse=True)
+		return render_template('searchComments.html', comments=sortedUsers)
+# end of comment search
 
 #default page
 @app.route("/", methods=['GET'])
